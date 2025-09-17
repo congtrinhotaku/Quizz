@@ -1,0 +1,175 @@
+{
+  "info": {
+    "name": "Quiz Server API",
+    "_postman_id": "c3f23a91-abc3-45b1-8dcd-quizapp",
+    "description": "Postman collection for Quiz Server (Express + MongoDB + Socket.IO)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"test@example.com\",\n  \"password\": \"123456\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"123456\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Quiz",
+      "item": [
+        {
+          "name": "Get All Quizzes",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/quiz", "host": ["{{baseUrl}}"], "path": ["quiz"] }
+          }
+        },
+        {
+          "name": "Create Quiz",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/quiz", "host": ["{{baseUrl}}"], "path": ["quiz"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"My Quiz\",\n  \"description\": \"Sample Quiz\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Quiz By ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/quiz/:id", "host": ["{{baseUrl}}"], "path": ["quiz", ":id"] }
+          }
+        },
+        {
+          "name": "Update Quiz",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/quiz/:id", "host": ["{{baseUrl}}"], "path": ["quiz", ":id"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Quiz\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Quiz",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/quiz/:id", "host": ["{{baseUrl}}"], "path": ["quiz", ":id"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Question",
+      "item": [
+        {
+          "name": "Create Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/question", "host": ["{{baseUrl}}"], "path": ["question"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quizId\": \"{{quizId}}\",\n  \"text\": \"2+2 bằng mấy?\",\n  \"options\": [\"3\", \"4\", \"5\"],\n  \"correctAnswer\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Questions by Quiz",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/question/{{quizId}}", "host": ["{{baseUrl}}"], "path": ["question", "{{quizId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Room",
+      "item": [
+        {
+          "name": "Create Room",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/room", "host": ["{{baseUrl}}"], "path": ["room"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quiz\": \"{{quizId}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Room",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/room/{{roomCode}}", "host": ["{{baseUrl}}"], "path": ["room", "{{roomCode}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Result",
+      "item": [
+        {
+          "name": "Get Results by Room",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/result/{{roomId}}", "host": ["{{baseUrl}}"], "path": ["result", "{{roomId}}"] }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000/api" },
+    { "key": "token", "value": "" },
+    { "key": "quizId", "value": "" },
+    { "key": "roomId", "value": "" },
+    { "key": "roomCode", "value": "" }
+  ]
+}
