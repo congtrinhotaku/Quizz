@@ -46,3 +46,13 @@ exports.deleteQuestion = async (req, res) => {
     res.status(400).json({ message: "Xóa thất bại", error: err.message });
   }
 };
+
+exports.getByCategory = async (req, res) => {
+  try {
+    const { cateId } = req.params;
+    const quizzes = await Quiz.find({ category: cateId }).populate("createdBy", "username email");
+    res.json(quizzes);
+  } catch (err) {
+    res.status(500).json({ message: "Lỗi server", error: err.message });
+  }
+};

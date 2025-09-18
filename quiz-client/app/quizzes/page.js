@@ -1,149 +1,121 @@
 "use client";
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
-export default function QuizzesPage() {
-  const [quizzes, setQuizzes] = useState([]);
-  const [title, setTitle] = useState("");
-  const [editQuiz, setEditQuiz] = useState(null); // quiz đang sửa
-  const [editTitle, setEditTitle] = useState("");
+export default function HomePage() {
+  const router = useRouter();
+  const [categories, setCategories] = useState([]);
+  const [quizzesByCategory, setQuizzesByCategory] = useState({});
 
+  // Load tất cả category
+  const loadCategories = async () => {
+    try {
+      const res = await api.get("/categories");
+      setCategories(res.data);
+    } catch (err) {
+      console.error("Lỗi load categories:", err);
+    }
+  };
+
+  // Load tất cả quiz theo category
   const loadQuizzes = async () => {
     try {
-      const userId = localStorage.getItem("userId");
-      if (!userId) return;
-      const res = await api.get(`/quizzes/user/${userId}`);
-      setQuizzes(res.data);
-    } catch (err) {
-      console.error("Lỗi load quiz:", err);
-    }
-  };
-
-  const handleCreate = async () => {
-    try {
-      const userId = localStorage.getItem("userId");
-      if (!userId) {
-        alert("Bạn cần đăng nhập!");
-        return;
+      const grouped = {};
+      for (let cat of categories) {
+        const res = await api.get(`/quizzes/category/${cat.code}`);
+        grouped[cat.name] = res.data;
       }
-      await api.post("/quizzes", { title, createdBy: userId });
-      setTitle("");
-      loadQuizzes();
+      setQuizzesByCategory(grouped);
     } catch (err) {
-      console.error("Tạo quiz thất bại:", err);
+      console.error("Lỗi load quizzes:", err);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm("Bạn có chắc muốn xóa quiz này?")) return;
+  const createRoom = async (quizId) => {
     try {
-      await api.delete(`/quizzes/${id}`);
-      loadQuizzes();
+      const res = await api.post("/rooms", { quiz: quizId });
+      const room = res.data;
+      router.push(`/host/${room.code}`);
     } catch (err) {
-      console.error("Xóa quiz thất bại:", err);
-    }
-  };
-
-  const handleEdit = (quiz) => {
-    setEditQuiz(quiz);
-    setEditTitle(quiz.title);
-  };
-
-  const handleUpdate = async () => {
-    try {
-      await api.put(`/quizzes/${editQuiz._id}`, { title: editTitle });
-      setEditQuiz(null);
-      setEditTitle("");
-      loadQuizzes();
-    } catch (err) {
-      console.error("Cập nhật quiz thất bại:", err);
+      console.error("Tạo room thất bại", err);
     }
   };
 
   useEffect(() => {
-    loadQuizzes();
+    const init = async () => {
+      await loadCategories();
+    };
+    init();
   }, []);
 
+  // Khi categories thay đổi, load quizzes
+  useEffect(() => {
+    if (categories.length > 0) loadQuizzes();
+  }, [categories]);
+
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Quiz của tôi</h1>
+    <div className="space-y-8 px-4 py-6">
+      <h1 className="text-3xl font-bold text-center">Trang Chủ QuizApp</h1>
 
-      {/* Form tạo quiz */}
-      <div className="flex gap-2">
-        <input
-          className="border p-2 rounded flex-1 bg-white"
-          placeholder="Tên quiz"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-        <button
-          onClick={handleCreate}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-        >
-          Tạo quiz
-        </button>
-      </div>
+      {categories.map((cat) => {
+        const quizzes = quizzesByCategory[cat.name] || [];
+        if (quizzes.length === 0) return null;
 
-      {/* Danh sách quiz */}
-      <ul className="space-y-2">
-        {quizzes.map((q) => (
-          <li
-            key={q._id}
-            className="p-4 bg-white text-black rounded shadow flex justify-between items-center"
-          >
-            <span className="font-bold">{q.title}</span>
-            <div className="space-x-2">
-              <Link
-                href={`/quizzes/${q._id}`}
-                className="bg-blue-500 text-white px-2 py-2 rounded hover:bg-yellow-600"
-              >
-                Chi tiết
-              </Link>
-              <button
-                onClick={() => handleEdit(q)}
-                className="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600"
-              >
-                Sửa
-              </button>
-              <button
-                onClick={() => handleDelete(q._id)}
-                className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
-              >
-                Xóa
-              </button>
+        return (
+          <div key={cat._id} className="space-y-3">
+            <h2 className="text-2xl font-semibold text-white">{cat.name}</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {quizzes.slice(0, 3).map((q) => (
+                <div
+                  key={q._id}
+                  className="bg-white rounded shadow overflow-hidden flex flex-col"
+                >
+                  {q.image ? (
+                    <img
+                      src={`http://localhost:5000${q.image}`}
+                      alt={q.title}
+                      className="h-40 w-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-40 bg-gray-200 flex items-center justify-center text-gray-500">
+                      Không có ảnh
+                    </div>
+                  )}
+
+                  <div className="p-4 flex-1 flex flex-col justify-between">
+                    <div>
+                      <h3 className="font-bold text-lg">{q.title}</h3>
+                      <p className="text-sm text-gray-600">
+                        Số câu hỏi: {q.questionCount || 0}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {q.isPrivate ? "🔒 Riêng tư" : "🌍 Công khai"}
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() => createRoom(q._id)}
+                      className="bg-purple-500 text-white px-2 py-1 rounded hover:bg-purple-600 mt-3"
+                    >
+                      Chơi ngay
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-          </li>
-        ))}
-      </ul>
 
-      {/* Modal sửa quiz */}
-      {editQuiz && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded shadow-lg w-96 space-y-4">
-            <h2 className="text-lg font-bold">Sửa Quiz</h2>
-            <input
-              className="border p-2 w-full rounded"
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-            />
-            <div className="flex justify-end gap-2">
+            {quizzes.length > 3 && (
               <button
-                onClick={() => setEditQuiz(null)}
-                className="bg-gray-300 px-3 py-1 rounded"
+                onClick={() => router.push(`/category/${cat.code}`)}
+                className="text-blue-500 hover:underline mt-2"
               >
-                Hủy
+                Xem thêm...
               </button>
-              <button
-                onClick={handleUpdate}
-                className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
-              >
-                Lưu
-              </button>
-            </div>
+            )}
           </div>
-        </div>
-      )}
+        );
+      })}
     </div>
   );
 }
