@@ -21,7 +21,7 @@ router.get("/category/:cateCode", getByCategory);
 router.get("/user/:userId", getQuizzesByUserId);
 router.get("/:id", getQuizById);
 router.put("/:id", verifyToken, updateQuiz);
-router.put("/:id/image", upload.single("image"), updateQuizImage); // ⚡ gọi đúng tên
+router.put("/:id/image", upload.single("image"),verifyToken, updateQuizImage); 
 router.delete("/:id", verifyToken, deleteQuiz);
 
 module.exports = router;

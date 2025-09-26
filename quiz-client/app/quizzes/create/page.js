@@ -10,6 +10,7 @@ export default function CreateQuizPage() {
   const [description, setDescription] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
   const [image, setImage] = useState(null);
+  const [preview, setPreview] = useState(null);
 
   // category
   const [category, setCategory] = useState("");
@@ -33,7 +34,13 @@ export default function CreateQuizPage() {
     loadCategories();
   }, []);
 
-
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImage(file);
+      setPreview(URL.createObjectURL(file));
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -41,8 +48,8 @@ export default function CreateQuizPage() {
       const formData = new FormData();
       formData.append("title", title);
       formData.append("description", description);
-      formData.append("isPrivate", isPrivate ? "true" : "false"); // ✅ ép thành string
-      formData.append("category", category); // category phải là _id thay vì code
+      formData.append("isPrivate", isPrivate ? "true" : "false");
+      formData.append("category", category);
       if (image) formData.append("image", image);
 
       const res = await api.post("/quizzes", formData, {
@@ -75,6 +82,32 @@ export default function CreateQuizPage() {
       <h1 className="text-2xl font-bold">➕ Tạo Quiz Mới</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Upload ảnh trước */}
+        <div className="w-full">
+          <label className="block font-semibold mb-1">Ảnh quiz</label>
+          <div
+            className="w-full h-48 border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer bg-gray-50 hover:bg-gray-100"
+            onClick={() => document.getElementById("quiz-image").click()}
+          >
+            {preview ? (
+              <img
+                src={preview}
+                alt="Preview"
+                className="h-full w-full object-cover rounded-lg"
+              />
+            ) : (
+              <span className="text-gray-500">+ Chọn ảnh</span>
+            )}
+          </div>
+          <input
+            type="file"
+            id="quiz-image"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageChange}
+          />
+        </div>
+
         <input
           className="border p-2 w-full rounded"
           placeholder="Tên quiz..."
@@ -110,13 +143,6 @@ export default function CreateQuizPage() {
           />
           <label>Quiz riêng tư</label>
         </div>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setImage(e.target.files[0])}
-        />
-
-      
 
         <button
           type="submit"

@@ -7,6 +7,7 @@ export default function HomePage() {
   const router = useRouter();
   const [categories, setCategories] = useState([]);
   const [quizzesByCategory, setQuizzesByCategory] = useState({});
+  const [otherQuizzes, setOtherQuizzes] = useState([]); // <-- thêm state
 
   // Load tất cả category
   const loadCategories = async () => {
@@ -32,6 +33,16 @@ export default function HomePage() {
     }
   };
 
+  // Load quiz không có chủ đề
+  const loadOtherQuizzes = async () => {
+    try {
+      const res = await api.get("/quizzes"); // <-- gọi /quizzes
+      setOtherQuizzes(res.data);
+    } catch (err) {
+      console.error("Lỗi load other quizzes:", err);
+    }
+  };
+
   const createRoom = async (quizId) => {
     try {
       const res = await api.post("/rooms", { quiz: quizId });
@@ -45,6 +56,7 @@ export default function HomePage() {
   useEffect(() => {
     const init = async () => {
       await loadCategories();
+      await loadOtherQuizzes(); // <-- load luôn quiz không chủ đề
     };
     init();
   }, []);
@@ -58,6 +70,7 @@ export default function HomePage() {
     <div className="space-y-8 px-4 py-6">
       <h1 className="text-3xl font-bold text-center">Trang Chủ QuizApp</h1>
 
+      {/* Render quiz theo category */}
       {categories.map((cat) => {
         const quizzes = quizzesByCategory[cat.name] || [];
         if (quizzes.length === 0) return null;
@@ -90,6 +103,9 @@ export default function HomePage() {
                         Số câu hỏi: {q.questionCount || 0}
                       </p>
                       <p className="text-sm text-gray-600">
+                        chủ đề: {q.category?.name || "N/A"}
+                      </p>
+                      <p className="text-sm text-gray-600">
                         {q.isPrivate ? "🔒 Riêng tư" : "🌍 Công khai"}
                       </p>
                     </div>
@@ -116,6 +132,64 @@ export default function HomePage() {
           </div>
         );
       })}
+
+      {/* Render quiz không có chủ đề */}
+      {otherQuizzes.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-2xl font-semibold text-white">Được chơi nhiều nhất</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {otherQuizzes.slice(0, 3).map((q) => (
+              <div
+                key={q._id}
+                className="bg-white rounded shadow overflow-hidden flex flex-col"
+              >
+                {q.image ? (
+                  <img
+                    src={`http://localhost:5000${q.image}`}
+                    alt={q.title}
+                    className="h-40 w-full object-cover"
+                  />
+                ) : (
+                  <div className="h-40 bg-gray-200 flex items-center justify-center text-gray-500">
+                    Không có ảnh
+                  </div>
+                )}
+
+                <div className="p-4 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="font-bold text-lg">{q.title}</h3>
+                    <p className="text-sm text-gray-600">
+                      Số câu hỏi: {q.questionCount || 0}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      chủ đề: {q.category?.name || "N/A"}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {q.isPrivate ? "🔒 Riêng tư" : "🌍 Công khai"}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => createRoom(q._id)}
+                    className="bg-purple-500 text-white px-2 py-1 rounded hover:bg-purple-600 mt-3"
+                  >
+                    Chơi ngay
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {otherQuizzes.length > 3 && (
+            <button
+              onClick={() => router.push(`/quizzes`)}
+              className="text-blue-500 hover:underline mt-2"
+            >
+              Xem thêm...
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

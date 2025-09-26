@@ -8,8 +8,6 @@ export default function QuizzesPage() {
   
 
   const [quizzes, setQuizzes] = useState([]);
-  const [editQuiz, setEditQuiz] = useState(null);
-  const [editTitle, setEditTitle] = useState("");
   
 
   const loadQuizzes = async () => {
@@ -25,30 +23,22 @@ export default function QuizzesPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Bạn có chắc muốn xóa quiz này?")) return;
-    try {
-      await api.delete(`/quizzes/${id}`);
+  if (!confirm("Bạn có chắc muốn xóa quiz này?")) return;
+
+  try {
+      const token = localStorage.getItem("token"); 
+      await api.delete(`/quizzes/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}` 
+        }
+      });
       loadQuizzes();
     } catch (err) {
       console.error("Xóa quiz thất bại:", err);
     }
   };
 
-  const handleEdit = (quiz) => {
-    setEditQuiz(quiz);
-    setEditTitle(quiz.title);
-  };
 
-  const handleUpdate = async () => {
-    try {
-      await api.put(`/quizzes/${editQuiz._id}`, { title: editTitle });
-      setEditQuiz(null);
-      setEditTitle("");
-      loadQuizzes();
-    } catch (err) {
-      console.error("Cập nhật quiz thất bại:", err);
-    }
-  };
 
   useEffect(() => {
     loadQuizzes();
@@ -94,6 +84,9 @@ export default function QuizzesPage() {
                 <p className="text-sm text-gray-600">
                   Số câu hỏi: {q.questionCount || 0}
                 </p>
+                <p className="text-sm text-gray-600">
+                      {q.isPrivate ? "🔒 Riêng tư" : "🌍 Công khai"}
+                </p>
               </div>
 
               <div className="flex justify-end gap-2 mt-3">
@@ -116,33 +109,7 @@ export default function QuizzesPage() {
         ))}
       </div>
 
-      {/* Modal sửa quiz */}
-      {editQuiz && (
-        <div className="fixed inset-0 bg-black/40 flex justify-center items-center">
-          <div className="bg-white p-6 rounded shadow-lg w-96 space-y-4">
-            <h2 className="text-lg font-bold">Sửa Quiz</h2>
-            <input
-              className="border p-2 w-full rounded"
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setEditQuiz(null)}
-                className="bg-gray-300 px-3 py-1 rounded"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={handleUpdate}
-                className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
-              >
-                Lưu
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      
     </div>
   );
 }

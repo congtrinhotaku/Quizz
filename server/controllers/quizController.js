@@ -1,6 +1,7 @@
 const Quiz = require("../models/Quiz");
 const Question = require("../models/Question");
 const Category = require("../models/Category");
+const Room = require("../models/Room");
 const mongoose = require("mongoose");
 
 
@@ -33,60 +34,80 @@ exports.createQuiz = async (req, res) => {
 
 exports.getAllQuizzes = async (req, res) => {
   try {
-    const quizzes = await Quiz.find( {isPrivate: false}).populate("createdBy", "username email");
+    // Lấy tất cả quiz công khai
+    const quizzes = await Quiz.find({ isPrivate: { $eq: false } })
+      .populate("createdBy", "username email")
+      .populate("category", "name")
+      .lean();
+
+    // Thêm questionCount và roomCount
     for (let quiz of quizzes) {
-      const count = await Question.countDocuments({ quiz: quiz._id });
-      quiz.questionCount = count;
+      const countQuestions = await Question.countDocuments({ quizId: quiz._id });
+      const countRooms = await Room.countDocuments({ quiz: quiz._id }); // <-- đếm số room
+      quiz.questionCount = countQuestions;
+      quiz.roomCount = countRooms;
     }
+
+    // Sort theo số room giảm dần
+    quizzes.sort((a, b) => b.roomCount - a.roomCount);
+
     res.json(quizzes);
   } catch (err) {
+    console.error("❌ Lỗi getAllQuizzes:", err);
     res.status(500).json({ message: "Lỗi server", error: err.message });
   }
 };
+
 exports.getByCategory = async (req, res) => {
   try {
     const { cateCode } = req.params;
+
+    // Tìm category theo code
     const cate = await Category.findOne({ code: cateCode.toLowerCase() });
     if (!cate) return res.status(404).json({ message: "Category không tồn tại" });
 
-    const quizzes = await Quiz.find({ category: cate._id }).populate("createdBy", "username email");
+    // Lấy quiz thuộc category này và chỉ lấy public
+    const quizzes = await Quiz.find({ category: cate._id, isPrivate: false })
+      .populate("createdBy", "username email")
+      .lean();
+
+    // Thêm questionCount cho từng quiz
     for (let quiz of quizzes) {
-      const count = await Question.countDocuments({ quiz: quiz._id });
+      const count = await Question.countDocuments({ quizId: quiz._id });
       quiz.questionCount = count;
     }
 
     res.json(quizzes);
   } catch (err) {
+    console.error("❌ Lỗi getByCategory:", err);
     res.status(500).json({ message: "Lỗi server", error: err.message });
   }
 };
+
 
 exports.getQuizzesByUserId = async (req, res) => {
   try {
     const userId = req.params.userId;
 
-    // Lấy danh sách quiz
+    // Lấy danh sách quiz của user (plain object vì dùng .lean)
     const quizzes = await Quiz.find({ createdBy: userId })
       .populate("createdBy", "username email")
-      .populate("category", "name");
+      .populate("category", "name")
+      .lean();
 
     // Thêm questionCount cho từng quiz
-    const quizzesWithCount = await Promise.all(
-      quizzes.map(async (quiz) => {
-        const count = await Question.countDocuments({ quiz: quiz._id });
-        return {
-          ...quiz.toObject(),
-          questionCount: count,
-        };
-      })
-    );
+    for (let quiz of quizzes) {
+      const count = await Question.countDocuments({ quizId: quiz._id });
+      quiz.questionCount = count;
+    }
 
-    res.json(quizzesWithCount);
+    res.json(quizzes);
   } catch (err) {
     console.error("❌ Lỗi getQuizzesByUserId:", err);
     res.status(500).json({ message: "Lỗi server", error: err.message });
   }
 };
+
 
 exports.getQuizById = async (req, res) => {
   try {

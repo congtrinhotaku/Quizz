@@ -55,13 +55,7 @@ export default function HostRoomPage() {
       setIsRunning(false);
       stopTimer();
       const results = (data.results || []).sort((a, b) => b.score - a.score);
-      alert(
-        "Quiz ended. Top:\n" +
-          results
-            .slice(0, 10)
-            .map((r, i) => `${i + 1}. ${r.nickname} — ${r.score}`)
-            .join("\n")
-      );
+    
     });
 
     return () => socket.disconnect();

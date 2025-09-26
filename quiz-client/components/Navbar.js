@@ -8,10 +8,18 @@ export default function Navbar() {
   const router = useRouter();
 
   useEffect(() => {
+   const handleUserUpdated = () => {
     const uid = localStorage.getItem("userId");
     const uname = localStorage.getItem("username");
-    setUser(uid ? { id: uid, name: uname || "Tài khoản" } : null);
-  }, []);
+    if (uid) setUser({ id: uid, name: uname });
+  };
+
+  window.addEventListener("userUpdated", handleUserUpdated);
+
+  return () => window.removeEventListener("userUpdated", handleUserUpdated);
+    
+  }, 
+  []);
 
   const handleLogout = () => {
     localStorage.removeItem("userId");

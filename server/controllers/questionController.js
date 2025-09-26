@@ -47,12 +47,4 @@ exports.deleteQuestion = async (req, res) => {
   }
 };
 
-exports.getByCategory = async (req, res) => {
-  try {
-    const { cateId } = req.params;
-    const quizzes = await Quiz.find({ category: cateId }).populate("createdBy", "username email");
-    res.json(quizzes);
-  } catch (err) {
-    res.status(500).json({ message: "Lỗi server", error: err.message });
-  }
-};
+

@@ -18,6 +18,7 @@ export default function LoginPage() {
       localStorage.setItem("userId", res.data.user._id);
       localStorage.setItem("username", res.data.user.username);
       window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new Event("userUpdated")); // optional nếu Navbar dùng event
       setMsg("Đăng nhập thành công!");
       router.push("/quizzes");
     } catch (err) {
